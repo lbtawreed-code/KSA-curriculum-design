@@ -1,40 +1,29 @@
-const N8N_URL = "https://n8n.lbtawreed.online/webhook/tawreed-module-intake";
+const N8N_URL = "https://n8n.lbtawreed.online/webhook/tawreed-module-intake-KSA";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "Method not allowed"
-    });
+    res.status(405).json({ error: "Method not allowed" });
+    return;
   }
 
   try {
-    const body = new URLSearchParams();
+    const contentType = req.headers["content-type"] || "application/x-www-form-urlencoded";
+    const body =
+      contentType.includes("application/json")
+        ? JSON.stringify(req.body)
+        : new URLSearchParams(req.body).toString();
 
-    for (const [key, value] of Object.entries(req.body || {})) {
-      body.append(key, value == null ? "" : String(value));
-    }
-
-    const n8nResponse = await fetch(N8N_URL, {
+    const response = await fetch(N8N_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
-      },
-      body: body.toString()
+      headers: { "Content-Type": contentType },
+      body
     });
 
-    const text = await n8nResponse.text();
-
-    res.status(n8nResponse.status);
-
-    try {
-      return res.json(JSON.parse(text));
-    } catch {
-      return res.send(text);
-    }
+    const text = await response.text();
+    res.status(response.status);
+    res.setHeader("Content-Type", response.headers.get("content-type") || "application/json");
+    res.send(text);
   } catch (error) {
-    return res.status(500).json({
-      error: "Failed to contact n8n",
-      details: error.message
-    });
+    res.status(502).json({ error: "Upstream n8n request failed", message: error.message });
   }
 }
