@@ -1,34 +1,23 @@
-const N8N_URL = "https://n8n.lbtawreed.online/webhook/approve-curriculum";
+const N8N_URL = "https://n8n.lbtawreed.online/webhook/approve-curriculum-KSA";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "Method not allowed"
-    });
+    res.status(405).json({ error: "Method not allowed" });
+    return;
   }
 
   try {
-    const n8nResponse = await fetch(N8N_URL, {
+    const response = await fetch(N8N_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(req.body || {})
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req.body)
     });
 
-    const text = await n8nResponse.text();
-
-    res.status(n8nResponse.status);
-
-    try {
-      return res.json(JSON.parse(text));
-    } catch {
-      return res.send(text);
-    }
+    const text = await response.text();
+    res.status(response.status);
+    res.setHeader("Content-Type", response.headers.get("content-type") || "application/json");
+    res.send(text);
   } catch (error) {
-    return res.status(500).json({
-      error: "Failed to contact n8n",
-      details: error.message
-    });
+    res.status(502).json({ error: "Upstream n8n request failed", message: error.message });
   }
 }
