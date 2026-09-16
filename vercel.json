@@ -3,7 +3,6 @@
   "framework": null,
   "buildCommand": null,
   "installCommand": null,
-  "public": true,
   "rewrites": [
     {
       "source": "/(.*)",
